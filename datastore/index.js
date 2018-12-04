@@ -8,26 +8,61 @@ var items = {};
 // Public API - Fix these CRUD functions ///////////////////////////////////////
 
 exports.create = (text, callback) => {
-  var id = counter.getNextUniqueId();
-  items[id] = text;
-  callback(null, { id, text });
+  counter.getNextUniqueId((error, fileId) => {
+    let todoPath = path.join(exports.dataDir, `${fileId}.txt`);
+    fs.writeFile(todoPath, text, (err) => {
+      if (err) {
+        console.log('error creating todo list item ', err);
+      } else {
+        callback(null, { id: fileId, text: text });
+      }
+    });
+  });
 };
 
 exports.readAll = (callback) => {
-  var data = [];
-  _.each(items, (text, id) => {
-    data.push({ id, text });
+  // var data = [];
+  let todoList = [];
+  // _.each(items, (text, id) => {
+  //   data.push({ id, text });
+  // });
+  // callback(null, data);
+  fs.readdir(exports.dataDir, (error, files) => {
+    if (error) {
+      console.log('error getting files from dir', error);
+    } else {
+      // console.log(files);
+      files.forEach((fileId)=>{
+        //console.log(fileId);
+        let todoPath = path.join(exports.dataDir, `${fileId}`);
+        fs.readFile(todoPath, (error, todoText) => {
+          if (error) {
+            callback(error);
+          } else {
+            todoList.push({ id: fileId.slice(0, -4), text: todoText + '' });
+            if (files.length === 0) {
+              callback(null, []);
+            }
+            if (todoList.length === files.length) {
+              callback(null, todoList);
+            }
+          }
+        });
+      });
+    }
   });
-  callback(null, data);
+  // console.log(todoList);
 };
 
 exports.readOne = (id, callback) => {
-  var text = items[id];
-  if (!text) {
-    callback(new Error(`No item with id: ${id}`));
-  } else {
-    callback(null, { id, text });
-  }
+  let todoPath = path.join(exports.dataDir, `${id}.txt`);
+  fs.readFile(todoPath, (error, todoText) => {
+    if (error) {
+      callback(error);
+    } else {
+      callback(null, {id: id, text: todoText + '',});
+    }
+  });
 };
 
 exports.update = (id, text, callback) => {
