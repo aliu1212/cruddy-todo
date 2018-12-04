@@ -21,28 +21,21 @@ exports.create = (text, callback) => {
 };
 
 exports.readAll = (callback) => {
-  // var data = [];
   let todoList = [];
-  // _.each(items, (text, id) => {
-  //   data.push({ id, text });
-  // });
-  // callback(null, data);
   fs.readdir(exports.dataDir, (error, files) => {
     if (error) {
       console.log('error getting files from dir', error);
     } else {
-      // console.log(files);
+      if (files.length === 0) {
+        callback(null, []);
+      }
       files.forEach((fileId)=>{
-        //console.log(fileId);
         let todoPath = path.join(exports.dataDir, `${fileId}`);
         fs.readFile(todoPath, (error, todoText) => {
           if (error) {
             callback(error);
           } else {
             todoList.push({ id: fileId.slice(0, -4), text: todoText + '' });
-            if (files.length === 0) {
-              callback(null, []);
-            }
             if (todoList.length === files.length) {
               callback(null, todoList);
             }
@@ -51,7 +44,6 @@ exports.readAll = (callback) => {
       });
     }
   });
-  // console.log(todoList);
 };
 
 exports.readOne = (id, callback) => {
@@ -66,13 +58,37 @@ exports.readOne = (id, callback) => {
 };
 
 exports.update = (id, text, callback) => {
-  var item = items[id];
-  if (!item) {
-    callback(new Error(`No item with id: ${id}`));
-  } else {
-    items[id] = text;
-    callback(null, { id, text });
-  }
+  // var item = items[id];
+  let todoPath = path.join(exports.dataDir, `${id}.txt`);
+  // if (!item) {
+  //   callback(new Error(`No item with id: ${id}`));
+  // } else {
+  //   items[id] = text;
+  //   callback(null, { id, text });
+  // }
+
+  fs.readFile(todoPath, (error, todoText) => {
+    if (error) {
+      callback(error);
+    } else {
+      fs.writeFile(todoPath, text, (error, todoText) => {
+        if (error) {
+          callback(error);
+        } else {
+          callback(null, todoText);
+        }
+      })
+    }
+  });
+
+  // fs.writeFile(todoPath, text, (error, todoText) => {
+  //   if (error) {
+  //     callback(error);
+  //   } else {
+  //     callback(null, todoText);
+  //   }
+  // })
+
 };
 
 exports.delete = (id, callback) => {
